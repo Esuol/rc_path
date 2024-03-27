@@ -17,4 +17,46 @@ pub fn normalize_to_component_vec(path: &Path) -> Vec<Component> {
         // 跳过components的下一个元素。
         components.next();
     }
+
+    for component in components {
+        match component {
+            Component::Prefix(..) => unreachable!(),
+            Component::RootDir => {
+                ret.push(component);
+            }
+            Component::CurDir => {
+                // 如果component是Component::CurDir，则跳过它。
+            }
+            c @ Component::ParentDir => {
+                let is_last_none_or_prefix =
+                    matches!(ret.last(), None | Some(Component::Prefix(_)));
+                if is_last_none_or_prefix {
+                    // 如果ret的最后一个元素是None或Component::Prefix，则将component添加到ret中。
+                    ret.push(c);
+                } else {
+                    let is_last_root_dir = matches!(ret.last(), Some(Component::RootDir));
+                    if !is_last_root_dir {
+                        let is_last_parent_dir = matches!(ret.last(), Some(Component::ParentDir));
+                        if is_last_parent_dir {
+                            // 如果ret的最后一个元素是Component::ParentDir，则将component添加到ret中。
+                            ret.push(c);
+                        } else {
+                            // 如果ret的最后一个元素是Component::CurDir，则将ret的最后一个元素弹出。
+                            ret.pop();
+                        }
+                    }
+                }
+            }
+
+            c @ Component::Normal(_) => {
+                ret.push(c);
+            }
+        }
+    }
+    ret
+}
+
+#[inline]
+pub fn component_vec_to_path_buf(components: Vec<Component>) -> PathBuf {
+    components.into_iter().collect()
 }
