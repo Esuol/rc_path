@@ -28,6 +28,8 @@ pub fn normalize_to_component_vec(path: &Path) -> Vec<Component> {
                 // 如果component是Component::CurDir，则跳过它。
             }
             c @ Component::ParentDir => {
+                // matches!是一个宏，它用于检查一个表达式是否匹配一个或多个模式。在这个例子中，matches!(ret.last(), None | Some(Component::Prefix(_)))检查ret.last()的返回值是否匹配None或Some(Component::Prefix(_))。
+                // None | Some(Component::Prefix(_))是一个模式，它匹配None或Some(Component::Prefix(_))。|表示"或"，_表示忽略Component::Prefix的内部值。
                 let is_last_none_or_prefix =
                     matches!(ret.last(), None | Some(Component::Prefix(_)));
                 if is_last_none_or_prefix {
@@ -58,5 +60,8 @@ pub fn normalize_to_component_vec(path: &Path) -> Vec<Component> {
 
 #[inline]
 pub fn component_vec_to_path_buf(components: Vec<Component>) -> PathBuf {
+    // components.into_iter()将components向量转换为一个迭代器。into_iter方法会消耗components，这意味着components在调用into_iter后将不再可用。
+    // collect()方法是一个非常强大的方法，它可以将迭代器中的所有元素收集到一个容器中。在这个例子中，collect()方法将Component迭代器中的所有元素收集到一个PathBuf中。PathBuf是一个动态的、可变的、拥有所有权的文件路径。
+    // 这个函数将一个Component类型的向量转换为一个PathBuf类型的值，这个PathBuf表示了一个完整的文件路径。
     components.into_iter().collect()
 }
