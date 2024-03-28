@@ -31,4 +31,29 @@ impl SugarPath for Path {
 
         component_vec_to_path_buf(components).into()
     }
+
+    fn absolutize(&self) -> Cow<Path> {
+        if self.is_absolute() {
+            self.normalize()
+        } else if cfg!(target_family = "windows") {
+            let mut components = self.components();
+            if matches!(components.next(), Some(Component::Prefix(_)))
+                && matches!(components.next(), Some(Component::RootDir))
+            {
+                let mut components = self.components().into_iter().collect::<Vec<_>>();
+                components.insert(1, Component::RootDir);
+                component_vec_to_path_buf(components)
+                    .into_normalize()
+                    .into()
+            } else {
+                let mut cwd = CWD.clone();
+                cwd.push(self);
+                cwd.into_normalize().into()
+            }
+        } else {
+            let mut cwd = CWD.clone();
+            cwd.push(self);
+            cwd.into_normalize().into()
+        }
+    }
 }
