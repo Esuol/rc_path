@@ -12,7 +12,7 @@ impl SugarPathBuf for PathBuf {
     fn into_normalize(self) -> PathBuf {
         let mut components = normalize_to_component_vec(&self);
 
-        if (components.is_empty()) {
+        if components.is_empty() {
             return PathBuf::from(".");
         }
 
@@ -33,6 +33,21 @@ impl SugarPathBuf for PathBuf {
             self.into_normalize()
         } else if cfg!(target_family = "windows") {
             let mut components = self.components();
+            if matches!(components.next(), Some(Component::Prefix(_)))
+                && matches!(components.next(), Some(Component::RootDir))
+            {
+                let mut components = self.components().into_iter().collect::<Vec<_>>();
+                components.insert(1, Component::RootDir);
+                component_vec_to_path_buf(components)
+            } else {
+                let mut cwd = CWD.clone();
+                cwd.push(self);
+                cwd.into_normalize()
+            }
+        } else {
+            let mut cwd = CWD.clone();
+            cwd.push(self);
+            cwd.into_normalize()
         }
     }
 }
